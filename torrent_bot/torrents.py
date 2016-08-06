@@ -2,7 +2,7 @@ import json
 import transmissionrpc
 
 
-class Torrents:
+class TorrentController:
     def __init__(self):
         self.tc = transmissionrpc.Client(address='localhost', port=9091)
         self.torrent_session = self.tc.get_session()

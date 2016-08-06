@@ -1,0 +1,14 @@
+Here's a list of all your torrents:
+
+{{#torrents}}
+```
+Hash: {{hash}}
+Status: {{status}}
+Progress: {{progress}}%
+ETA: {{eta}}
+
+{{#files}}
+{{name}}
+{{/files}}
+```
+{{/torrents}}

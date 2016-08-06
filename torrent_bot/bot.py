@@ -2,7 +2,8 @@ import os
 import time
 import json
 import re
-from torrent_bot.torrents import Torrents
+from torrent_bot.torrents import TorrentController
+from torrent_bot.responses import ResponseGenerator
 from slackclient import SlackClient
 
 
@@ -13,7 +14,8 @@ class TorrentBot:
         self.bot_name = bot_name
         self.bot_id = self.get_bot_id()
 
-        self.tc = Torrents()
+        self.torrent_controller = TorrentController()
+        self.response_generator = ResponseGenerator()
 
     def get_bot_id(self):
         api_call = self.slack_client.api_call("users.list")
@@ -34,18 +36,23 @@ class TorrentBot:
 
             # Fetch All Torrents
             if re.match(r'.*(status|list (of )*all).*', message_text, re.IGNORECASE):
-                torrent_list = self.tc.get_torrents()
-                print torrent_list
+                torrent_list = self.torrent_controller.get_torrents()
                 print json.dumps(torrent_list, indent=4)
+
+                if len(torrent_list) == 0:
+                    return {
+                        'channel': message['channel'],
+                        'message': "There are no torrents in your list"
+                    }
 
                 return {
                     'channel': message['channel'],
-                    'message': "Here are your current downloads: ```%s```" % json.dumps(torrent_list, indent=4)
+                    'message': self.response_generator.response('fetch-all', {'torrents': torrent_list})
                 }
 
             # Pause All Torrents
             elif re.match(r'.*(stop|pause) all.*', message_text, re.IGNORECASE):
-                self.tc.pause_all()
+                self.torrent_controller.pause_all()
 
                 return {
                     'channel': message['channel'],
@@ -54,7 +61,7 @@ class TorrentBot:
 
             # Resume All Torrents
             elif re.match(r'.*(start|resume|continue) all.*', message_text, re.IGNORECASE):
-                self.tc.resume_all()
+                self.torrent_controller.resume_all()
 
                 return {
                     'channel': message['channel'],
@@ -62,9 +69,9 @@ class TorrentBot:
                 }
 
             # Add torrent
-            elif re.match(r'.*(add|download).*http://.*.torrent.*', message_text, re.IGNORECASE):
+            elif re.match(r'.*(add|download).*(http://.*.torrent).*', message_text, re.IGNORECASE):
                 search_results = re.search(r'http://(.*).torrent', message_text).group(0)
-                self.tc.add_torrent(search_results)
+                self.torrent_controller.add_torrent(search_results)
 
                 return {
                     'channel': message['channel'],
@@ -74,7 +81,7 @@ class TorrentBot:
             # Remove torrent
             elif re.match(r'.*(remove|cancel|delete).*[0-9a-z]{40}', message_text, re.IGNORECASE):
                 search_results = re.search(r'[0-9a-z]{40}', message_text).group(0)
-                self.tc.remove_torrent(search_results)
+                self.torrent_controller.remove_torrent(search_results)
 
                 return {
                     'channel': message['channel'],
