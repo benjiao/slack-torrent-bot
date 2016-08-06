@@ -33,7 +33,7 @@ class TorrentBot:
             message_text = message['text'].split("<@%s>: " % self.bot_id)[1]
 
             # Fetch All Torrents
-            if re.match(r'.*status.*', message_text, re.IGNORECASE):
+            if re.match(r'.*(status|list (of )*all).*', message_text, re.IGNORECASE):
                 torrent_list = self.tc.get_torrents()
                 print torrent_list
                 print json.dumps(torrent_list, indent=4)
@@ -44,9 +44,8 @@ class TorrentBot:
                 }
 
             # Pause All Torrents
-            elif re.match(r'.*pause all.*', message_text, re.IGNORECASE):
-                response = self.tc.pause_all()
-                print response
+            elif re.match(r'.*(stop|pause) all.*', message_text, re.IGNORECASE):
+                self.tc.pause_all()
 
                 return {
                     'channel': message['channel'],
@@ -54,13 +53,39 @@ class TorrentBot:
                 }
 
             # Resume All Torrents
-            elif re.match(r'.*resume all.*', message_text, re.IGNORECASE):
-                response = self.tc.resume_all()
-                print response
+            elif re.match(r'.*(start|resume|continue) all.*', message_text, re.IGNORECASE):
+                self.tc.resume_all()
 
                 return {
                     'channel': message['channel'],
                     'message': "I have resumed all of your torrents!"
+                }
+
+            # Add torrent
+            elif re.match(r'.*(add|download).*http://.*.torrent.*', message_text, re.IGNORECASE):
+                search_results = re.search(r'http://(.*).torrent', message_text).group(0)
+                self.tc.add_torrent(search_results)
+
+                return {
+                    'channel': message['channel'],
+                    'message': "Okay!"
+                }
+
+            # Remove torrent
+            elif re.match(r'.*(remove|cancel|delete).*[0-9a-z]{40}', message_text, re.IGNORECASE):
+                search_results = re.search(r'[0-9a-z]{40}', message_text).group(0)
+                self.tc.remove_torrent(search_results)
+
+                return {
+                    'channel': message['channel'],
+                    'message': "Done!"
+                }
+
+            # Default message
+            else:
+                return {
+                    'channel': message['channel'],
+                    'message': "Huh?"
                 }
 
         return None

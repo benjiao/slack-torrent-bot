@@ -38,6 +38,14 @@ class Torrents:
 
         return True
 
+    def add_torrent(self, url):
+        results = self.tc.add_torrent(url)
+        return True
+
+    def remove_torrent(self, torrent_hash):
+        results = self.tc.remove_torrent(torrent_hash)
+        return True
+
 if __name__ == '__main__':
     tc = Torrents()
     results = tc.get_torrents()
