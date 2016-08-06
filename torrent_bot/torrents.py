@@ -21,7 +21,8 @@ class TorrentController:
                 'hash': result.hashString,
                 'eta': result.format_eta(),
                 'status': result.status,
-                'progress': result.progress,
+                'progress': float('%.3f' % result.progress),
+                'name': result.name,
                 'files': [val for key, val in result.files().iteritems()]
             })
 
