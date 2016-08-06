@@ -1,21 +1,29 @@
 import os
+import re
 import time
 import json
-import re
 from torrent_bot.torrents import TorrentController
 from torrent_bot.responses import ResponseGenerator
 from slackclient import SlackClient
 
 
 class TorrentBot:
-    def __init__(self, slack_token, bot_name):
-        self.slack_client = SlackClient(slack_token)
-        self.websocket_delay = 1
-        self.bot_name = bot_name
-        self.bot_id = self.get_bot_id()
+    def __init__(self, config_file='~/torrent-bot.json'):
+        self.config = self.load_config(config_file)
 
-        self.torrent_controller = TorrentController()
+        self.slack_client = SlackClient(self.config['slack']['token'])
+        self.slack_bot_name = self.config['slack']['bot-name']
+        self.slack_bot_id = self.get_bot_id()
+
+        self.torrent_controller = TorrentController(config=self.config)
         self.response_generator = ResponseGenerator()
+
+    def load_config(self, config_file):
+        config_file_path = os.path.expanduser(config_file)
+        print "Config: %s" % config_file_path
+
+        with open(config_file_path, 'r') as fp:
+            return json.load(fp)
 
     def get_bot_id(self):
         api_call = self.slack_client.api_call("users.list")
@@ -24,15 +32,15 @@ class TorrentBot:
             users = api_call.get('members')
 
             for user in users:
-                if user.get('name') == self.bot_name:
+                if user.get('name') == self.slack_bot_name:
                     print "Bot ID: %s" % user.get('id')
                     return user.get('id')
         else:
-            print "Cannot find Bot ID: %s" % self.bot_name
+            print "Cannot find Bot ID: %s" % self.slack_bot_name
 
     def parse(self, message):
-        if 'text' in message and message['text'].startswith("<@%s>: " % self.bot_id):
-            message_text = message['text'].split("<@%s>: " % self.bot_id)[1]
+        if 'text' in message and message['text'].startswith("<@%s>: " % self.slack_bot_id):
+            message_text = message['text'].split("<@%s>: " % self.slack_bot_id)[1]
 
             # Fetch All Torrents
             if re.match(r'.*(status|list (of )*all).*', message_text, re.IGNORECASE):
@@ -113,12 +121,13 @@ class TorrentBot:
                             text=response['message'],
                             as_user=True)
 
-                time.sleep(self.websocket_delay)
+                time.sleep(self.config['websocket-delay'])
 
         else:
             print("Connection failed. Invalid Slack token or bot ID?")
 
 
 if __name__ == '__main__':
-    tbot = TorrentBot(slack_token=os.environ.get('TORRENTBOT_SLACK_TOKEN'), bot_name='torrentbot')
+    config_file = os.environ.get('TORRENTBOT_CONFIG', '~/torrent-bot.json')
+    tbot = TorrentBot(config_file=config_file)
     tbot.run()

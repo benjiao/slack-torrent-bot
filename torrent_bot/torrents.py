@@ -3,8 +3,13 @@ import transmissionrpc
 
 
 class TorrentController:
-    def __init__(self):
-        self.tc = transmissionrpc.Client(address='localhost', port=9091)
+    def __init__(self, config):
+        self.tc = transmissionrpc.Client(
+            address=config['transmission']['address'],
+            port=config['transmission']['port'],
+            user=config['transmission'].get('user', None),
+            password=config['transmission'].get('password', None))
+
         self.torrent_session = self.tc.get_session()
 
     def get_torrents(self):

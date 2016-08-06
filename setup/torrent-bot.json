@@ -1,0 +1,13 @@
+{
+    "websocket-delay": 1,
+    "slack": {
+        "token": "",
+        "bot-name": "torrentbot"
+    },
+    "transmission": {
+        "address": "localhost",
+        "port": 9091,
+        "user": null,
+        "password": null
+    }
+}

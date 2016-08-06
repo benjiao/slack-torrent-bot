@@ -12,12 +12,9 @@ class ResponseGenerator:
         templates = [t for t in os.listdir(template_dir) if t.endswith('.mustache')]
         self.parse_templates(templates)
 
-        print self.templates
-
     def parse_templates(self, templates):
         for template in templates:
             print "Parse template: %s" % os.path.join(self.template_dir, template)
-            print template.strip('.mustache')
 
             with codecs.open(os.path.join(self.template_dir, template), 'r', 'utf-8') as content_file:
                 content = content_file.read()
