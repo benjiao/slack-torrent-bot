@@ -77,8 +77,18 @@ class TorrentBot:
                 }
 
             # Add torrent
-            elif re.match(r'.*(add|download).*(http://.*.torrent).*', message_text, re.IGNORECASE):
+            elif re.match(r'.*(add|download).*http://.*.torrent.*', message_text, re.IGNORECASE):
                 search_results = re.search(r'http://(.*).torrent', message_text).group(0)
+                self.torrent_controller.add_torrent(search_results)
+
+                return {
+                    'channel': message['channel'],
+                    'message': "Okay!"
+                }
+
+            # Add torrent
+            elif re.match(r'.*(add|download).*magnet:\?xt=urn:\S+.*', message_text, re.IGNORECASE):
+                search_results = re.search(r'magnet:\?xt=urn:\S+', message_text).group(0)
                 self.torrent_controller.add_torrent(search_results)
 
                 return {
